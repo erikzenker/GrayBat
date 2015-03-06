@@ -79,6 +79,10 @@ namespace graybat {
 	    
 	}
 
+	void setVertex(const Vertex v){
+	    graph.setVertexProperty(v.id, v);
+	}
+	
 
 	/***************************************************************************
 	 *

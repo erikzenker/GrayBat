@@ -7,6 +7,7 @@
 #include <array>      /* std::array */
 #include <cmath>      /* sqrt */
 #include <cstdlib>    /* atoi */
+#include <utility>    /* std::pair, std::make_pair */
 
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
@@ -15,8 +16,11 @@ typedef unsigned Cell;
 
 
 struct Mesh : public graybat::graphPolicy::SimpleProperty{
-    Mesh() : SimpleProperty(0), core(9,0), border(16,0){}
-    Mesh(ID id) : SimpleProperty(id), core(9,0), border(14,0){
+    Mesh() : Mesh(0) {}
+    Mesh(ID id) : SimpleProperty(id),
+		  core(9,0),
+		  border(14,0),
+		  coordinates(0,0){
       // unsigned random = rand() % 10000;
       // if(random < 3125){
       // 	isAlive[0] = 1;
@@ -26,22 +30,27 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 	
     std::vector<Cell> core;
     std::vector<Cell> border;
+    std::pair<unsigned, unsigned> coordinates;
     //unsigned aliveNeighbors;
 
 
 };
 
 struct Link : public graybat::graphPolicy::SimpleProperty{
-    Link() : SimpleProperty(0), indices{{0,0,0}}{}
-    Link(ID id) : SimpleProperty(id), indices{{0,0,0}}{
-      // unsigned random = rand() % 10000;
-      // if(random < 3125){
-      // 	isAlive[0] = 1;
-      // }
+    Link() : Link(0){}
+    Link(ID id) : SimpleProperty(id){
 
     }
-	
-    std::array<unsigned, 3> indices;
+
+    
+    typedef std::vector<Cell>::iterator it;
+    
+    boost::permutation_iterator<it, it> src_begin;
+    boost::permutation_iterator<it, it> src_end;
+
+    boost::permutation_iterator<it, it> dest_begin;
+    boost::permutation_iterator<it, it> dest_end;
+
     //unsigned aliveNeighbors;
 
 
@@ -129,14 +138,47 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      * Initialize Communication
      ****************************************************************************/
     //Create Graph
-    const unsigned height = sqrt(nCells);
-    const unsigned width  = height;
+    // const unsigned height = sqrt(nCells);
+    // const unsigned width  = height;
 
+    const unsigned height = 1;
+    const unsigned width  = 2;
+    
     // Create GoL Graph
-    MyCave cave(graybat::pattern::Grid(1, 2));
+    MyCave cave(graybat::pattern::Grid(height, width));
     
     // Distribute vertices
     cave.distribute(graybat::mapping::Random(1));
+
+    // Assign coordinates to grid vertices
+    for(Vertex v: cave.getVertices()){
+	unsigned id = v.id;
+
+	unsigned x = id % width;
+	unsigned y = (id / width);
+
+	v.coordinates = std::make_pair(x,y);
+
+	cave.setVertex(v);
+    }
+
+    // Precompute permutation_iterator
+    for(Vertex v: cave.getVertices()){
+	for(auto link : cave.getOutEdges(v)){
+	    Vertex destVertex = link.first;
+	    Edge   destEdge   = link.second;
+
+	    // destEdge.src_begin = boost::make_permutation_iterator(indices.begin(), );
+
+	}
+
+	for(auto link : cave.getInEdges(v)){
+	    Vertex srcVertex = link.first;
+	    Edge   srcEdge   = link.second;
+
+	}
+	
+    }
 
     
     /***************************************************************************
@@ -155,16 +197,20 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      // 	    printGolDomain(golDomain, width, height, timestep);
      // 	}
 	
-     // 	// Send state to neighbor cells
+	  // Send state to neighbor cells
 	  for(Vertex &v : cave.hostedVertices){
-      	    for(auto link : cave.getOutEdges(v)){
-      		Vertex destVertex = link.first;
-      		Edge   destEdge   = link.second;
-		std::array<unsigned, 3> send{{1,1,1}};
+	      for(auto link : cave.getOutEdges(v)){
+		  Vertex destVertex = link.first;
+		  Edge   destEdge   = link.second;
+
+		  
+		  std::array<unsigned, 3> send{{1,1,1}};
+
+		  std::cout << destVertex.id << " " << destVertex.coordinates.first << " " << destVertex.coordinates.second << std::endl;
 		
-      		events.push_back(cave.asyncSend(destVertex, destEdge, send));
-      	    }
-      	}
+		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
+	      }
+	  }
 
      	// Recv state from neighbor cells
      	for(Vertex &v : cave.hostedVertices){

@@ -276,6 +276,7 @@ namespace graybat {
 		return vertices;
 	    }
 
+	public:	    
 	    void setVertexProperty(BGLVertex vertex, Vertex value){
 		(*graph)[vertex] = value;
 	    }
@@ -283,7 +284,9 @@ namespace graybat {
 	    void setEdgeProperty(BGLEdge edge, Edge value){
 		(*graph)[edge] = value;
 	    }
-
+	    
+	private:
+	    
 	    /**
 	     * @brief Returns the property of *vertex*.
 	     *
