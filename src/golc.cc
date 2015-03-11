@@ -121,9 +121,6 @@ typedef std::vector<Cell>::iterator it2;
 boost::permutation_iterator<it2, it2> begin;
 boost::permutation_iterator<it2, it2> end;
 
-std::vector<Cell> testV(9,0);
-
-std::vector<Cell> destIndices {{1,2,3}};
 
 int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     /***************************************************************************
@@ -188,12 +185,12 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 
 	for(auto &link : cave.getInEdges(v)){
 	    Vertex& srcVertex = *(cave.getVertex2(link.first.id));
-	    Edge&   srcEdge   = *(cave.getEdge2(srcVertex, v));
+	    Edge&   srcEdge   = *(cave.getEdge2(v, srcVertex));
 
 	    // srcEdge.dest_begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
 	    // srcEdge.dest_end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
-	    begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
-	    end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
+	    srcEdge.dest_begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
+	    srcEdge.dest_end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
 
 	    
 	    //cave.setEdge(srcVertex, v, srcEdge);
@@ -243,7 +240,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		std::array<unsigned, 3> recv{{0,0,0}};
      		cave.recv(srcVertex, srcEdge, recv);
 
-		std::copy(recv.begin(), recv.end(), begin);
+		std::copy(recv.begin(), recv.end(), srcEdge.dest_begin);
 
 		for(Cell c: srcVertex.border){
 		    std::cout << c << " " ;

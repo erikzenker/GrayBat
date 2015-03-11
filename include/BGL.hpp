@@ -286,11 +286,11 @@ namespace graybat {
 	    }
 
 	    void setEdgeProperty(BGLVertex srcVertex, BGLVertex destVertex, Edge value){
-		BGLEdge e;
+		BGLEdge edge;
 		bool found;
-		std::tie(e, found) = boost::edge(srcVertex, destVertex, (*graph));
+		std::tie(edge, found) = boost::edge(srcVertex, destVertex, (*graph));
 		
-		(*graph)[e] = value;
+		(*graph)[edge] = value;
 	    }
 
 	    Vertex* getVertexProperty2(BGLVertex vertex){
@@ -299,11 +299,11 @@ namespace graybat {
 
 
 	    Edge* getEdgeProperty2(BGLVertex srcVertex, BGLVertex destVertex){
-		BGLEdge e;
+		BGLEdge edge;
 		bool found;
-		std::tie(e, found) = boost::edge(srcVertex, destVertex, (*graph));
+		std::tie(edge, found) = boost::edge(srcVertex, destVertex, (*graph));
 
-		return &((*graph)[e]);
+		return &((*graph)[edge]);
 
 	    }
 	    
