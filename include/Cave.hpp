@@ -59,10 +59,20 @@ namespace graybat {
 	    
 	}
 	
-	Vertex getVertex(VertexID vertexID){
+	Vertex getVertex(const VertexID vertexID){
 	    return graph.getVertices().at(vertexID);
 	    
 	}
+
+	Vertex* getVertex2(const VertexID vertexID){
+	    return graph.getVertexProperty2(vertexID);
+	}
+
+	void setVertex(const Vertex v){
+	    graph.setVertexProperty(v.id, v);
+	}
+	
+
 
 	std::vector<Vertex> getAdjacentVertices(const Vertex v){
 	    return graph.getAdjacentVertices(v);
@@ -74,13 +84,24 @@ namespace graybat {
 	    
 	}
 
+
+	void setOutEdge(const Edge e, const Vertex v){
+	    graph.setEdgeProperty(e.id, e);
+	}
+
+
 	std::vector<std::pair<Vertex, Edge>> getInEdges(const Vertex v){
 	    return graph.getInEdges(v);
 	    
 	}
 
-	void setVertex(const Vertex v){
-	    graph.setVertexProperty(v.id, v);
+	void setInEdge(const Edge e, const Vertex v){
+	    graph.setEdgeProperty(e.id, e);
+	}
+
+	void setEdge(const Vertex srcVertex, const Vertex destVertex, const Edge edge){
+	    graph.setEdgeProperty(srcVertex.id, destVertex.id, edge);
+
 	}
 	
 

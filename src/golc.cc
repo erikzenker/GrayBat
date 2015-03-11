@@ -38,13 +38,14 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 
 struct Link : public graybat::graphPolicy::SimpleProperty{
     Link() : Link(0){}
-    Link(ID id) : SimpleProperty(id){
+    Link(ID id) : SimpleProperty(id), srcIndices{{1,2,3}}, destIndices{{1,2,3}}{
 
     }
 
-    
     typedef std::vector<Cell>::iterator it;
-    //typedef std::array<unsigned, 3> xit;
+
+    std::vector<Cell> srcIndices;
+    std::vector<Cell> destIndices;
     
     boost::permutation_iterator<it, it> src_begin;
     boost::permutation_iterator<it, it> src_end;
@@ -115,6 +116,14 @@ void updateState(T_Cell &cell){
 
 }
 
+typedef std::vector<Cell>::iterator it2;
+
+boost::permutation_iterator<it2, it2> begin;
+boost::permutation_iterator<it2, it2> end;
+
+std::vector<Cell> testV(9,0);
+
+std::vector<Cell> destIndices {{1,2,3}};
 
 int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     /***************************************************************************
@@ -164,26 +173,30 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     // Precompute permutation_iterator
     for(Vertex &v: cave.getVertices()){
 	for(auto link : cave.getOutEdges(v)){
-	    Vertex destVertex = link.first;
+	    Vertex destVertex = link.first.id;
 	    Edge   destEdge   = link.second;
 
 	    std::vector<unsigned> srcIndices {{2,5,8}};
 
 	    destEdge.src_begin = boost::make_permutation_iterator(srcIndices.begin(), v.core.begin());
-	    destEdge.src_end = boost::make_permutation_iterator(srcIndices.end(), v.core.end());
+	    destEdge.src_end   = boost::make_permutation_iterator(srcIndices.end(), v.core.end());
+	    cave.setEdge(v, destVertex, destEdge);
 
 
 
 	}
 
 	for(auto &link : cave.getInEdges(v)){
-	    Vertex& srcVertex = link.first;
-	    Edge&   srcEdge   = link.second;
+	    Vertex& srcVertex = *(cave.getVertex2(link.first.id));
+	    Edge    srcEdge   = link.second;
 
-	    std::vector<unsigned> destIndices {{5,6,7}};
+	    // srcEdge.dest_begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
+	    // srcEdge.dest_end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
+	    begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
+	    end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
 
-	    srcEdge.dest_begin = boost::make_permutation_iterator(destIndices.begin(), srcVertex.border.begin());
-	    srcEdge.dest_end   = boost::make_permutation_iterator(destIndices.end(), srcVertex.border.end());
+	    
+	    cave.setEdge(srcVertex, v, srcEdge);
 	    
 
 	}
@@ -216,7 +229,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  
 		  std::array<unsigned, 3> send{{1,1,1}};
 
-		  std::cout << destVertex.id << " " << destVertex.coordinates.first << " " << destVertex.coordinates.second << std::endl;
+		  //std::cout << destVertex.id << " " << destVertex.coordinates.first << " " << destVertex.coordinates.second << std::endl;
 		
 		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
 	      }
@@ -229,15 +242,21 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      		Edge   srcEdge   = link.second;
 		std::array<unsigned, 3> recv{{0,0,0}};
      		cave.recv(srcVertex, srcEdge, recv);
-		std::array<unsigned, 3> indices{{5,6,7}};
 
-		auto it_begin = boost::make_permutation_iterator(srcVertex.border.begin(), indices.begin());
-		std::copy(recv.begin(), recv.end(), it_begin);
+		std::copy(recv.begin(), recv.end(), begin);
 
-		for(unsigned u: srcVertex.border){
-		    std::cout << u << " ";
+		for(Cell c: srcVertex.border){
+		    std::cout << c << " " ;
 		}
 		std::cout << std::endl;
+	
+		
+		
+		//for(unsigned u: srcVertex.border){
+		// for(unsigned u: testV){
+		//     std::cout << u << " ";
+		// }
+		// std::cout << std::endl;
 		
      		//if(srcVertex.isAlive[0]) v.aliveNeighbors++;
      	    }

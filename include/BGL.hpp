@@ -7,7 +7,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/subgraph.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <tuple>
+#include <tuple>   /* std::tie */
 #include <string>
 #include <fstream> /* std::fstream */
 
@@ -284,6 +284,20 @@ namespace graybat {
 	    void setEdgeProperty(BGLEdge edge, Edge value){
 		(*graph)[edge] = value;
 	    }
+
+	    void setEdgeProperty(BGLVertex srcVertex, BGLVertex destVertex, Edge value){
+		BGLEdge e;
+		bool found;
+		std::tie(e, found) = boost::edge(srcVertex, destVertex, (*graph));
+		
+		(*graph)[e] = value;
+	    }
+
+	    Vertex* getVertexProperty2(BGLVertex vertex){
+		return &((*graph)[vertex]);
+	    }
+
+	    
 	    
 	private:
 	    
