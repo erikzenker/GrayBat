@@ -147,7 +147,7 @@ namespace graybat {
 		for(BGLEdge e : bglOutEdges){
 		    BGLVertex target = getEdgeTarget(e);
 		    Vertex vertex    = getVertexProperty(target);
-		    Edge   edge      = getEdge(e);
+		    Edge   edge      = getEdgeProperty(e);
 		    outEdges.push_back(std::make_pair(vertex, edge));
 		}
 		return outEdges;
@@ -166,7 +166,7 @@ namespace graybat {
 		for(BGLEdge e : bglInEdges){
 		    BGLVertex source = getEdgeSource(e);
 		    Vertex vertex    = getVertexProperty(source);
-		    Edge edge        = getEdge(e);
+		    Edge edge        = getEdgeProperty(e);
 		    inEdges.push_back(std::make_pair(vertex, edge));
 		}
 		return inEdges;
@@ -297,7 +297,15 @@ namespace graybat {
 		return &((*graph)[vertex]);
 	    }
 
-	    
+
+	    Edge* getEdgeProperty2(BGLVertex srcVertex, BGLVertex destVertex){
+		BGLEdge e;
+		bool found;
+		std::tie(e, found) = boost::edge(srcVertex, destVertex, (*graph));
+
+		return &((*graph)[e]);
+
+	    }
 	    
 	private:
 	    
@@ -313,7 +321,7 @@ namespace graybat {
 	     * @brief Return the property of *edge*.
 	     *
 	     */
-	    Edge getEdge(BGLEdge edge){
+	    Edge getEdgeProperty(BGLEdge edge){
 		return (*graph)[edge];
 	    }
 

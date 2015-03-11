@@ -99,10 +99,16 @@ namespace graybat {
 	    graph.setEdgeProperty(e.id, e);
 	}
 
+	Edge* getEdge2(const Vertex srcVertex, const Vertex destVertex){
+	    return graph.getEdgeProperty2(srcVertex.id, destVertex.id);
+	}
+
 	void setEdge(const Vertex srcVertex, const Vertex destVertex, const Edge edge){
 	    graph.setEdgeProperty(srcVertex.id, destVertex.id, edge);
 
 	}
+
+
 	
 
 	/***************************************************************************

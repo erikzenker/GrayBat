@@ -188,7 +188,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 
 	for(auto &link : cave.getInEdges(v)){
 	    Vertex& srcVertex = *(cave.getVertex2(link.first.id));
-	    Edge    srcEdge   = link.second;
+	    Edge&   srcEdge   = *(cave.getEdge2(srcVertex, v));
 
 	    // srcEdge.dest_begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
 	    // srcEdge.dest_end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
@@ -196,7 +196,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    end   = boost::make_permutation_iterator(srcVertex.border.end(), srcEdge.destIndices.end());
 
 	    
-	    cave.setEdge(srcVertex, v, srcEdge);
+	    //cave.setEdge(srcVertex, v, srcEdge);
 	    
 
 	}
