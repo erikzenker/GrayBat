@@ -44,14 +44,13 @@ struct Link : public graybat::graphPolicy::SimpleProperty{
 
     
     typedef std::vector<Cell>::iterator it;
+    //typedef std::array<unsigned, 3> xit;
     
     boost::permutation_iterator<it, it> src_begin;
     boost::permutation_iterator<it, it> src_end;
 
     boost::permutation_iterator<it, it> dest_begin;
     boost::permutation_iterator<it, it> dest_end;
-
-    //unsigned aliveNeighbors;
 
 
 };
@@ -163,18 +162,29 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     }
 
     // Precompute permutation_iterator
-    for(Vertex v: cave.getVertices()){
+    for(Vertex &v: cave.getVertices()){
 	for(auto link : cave.getOutEdges(v)){
 	    Vertex destVertex = link.first;
 	    Edge   destEdge   = link.second;
 
-	    // destEdge.src_begin = boost::make_permutation_iterator(indices.begin(), );
+	    std::vector<unsigned> srcIndices {{2,5,8}};
+
+	    destEdge.src_begin = boost::make_permutation_iterator(srcIndices.begin(), v.core.begin());
+	    destEdge.src_end = boost::make_permutation_iterator(srcIndices.end(), v.core.end());
+
+
 
 	}
 
-	for(auto link : cave.getInEdges(v)){
-	    Vertex srcVertex = link.first;
-	    Edge   srcEdge   = link.second;
+	for(auto &link : cave.getInEdges(v)){
+	    Vertex& srcVertex = link.first;
+	    Edge&   srcEdge   = link.second;
+
+	    std::vector<unsigned> destIndices {{5,6,7}};
+
+	    srcEdge.dest_begin = boost::make_permutation_iterator(destIndices.begin(), srcVertex.border.begin());
+	    srcEdge.dest_end   = boost::make_permutation_iterator(destIndices.end(), srcVertex.border.end());
+	    
 
 	}
 	
