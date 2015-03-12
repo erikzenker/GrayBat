@@ -38,7 +38,7 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 
 struct Link : public graybat::graphPolicy::SimpleProperty{
     Link() : Link(0){}
-    Link(ID id) : SimpleProperty(id), srcIndices{{1,2,3}}, destIndices{{1,2,3}}{
+    Link(ID id) : SimpleProperty(id), srcIndices{{1,2,3}}, destIndices{{1,3,7}}{
 
     }
 
@@ -240,6 +240,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		std::array<unsigned, 3> recv{{0,0,0}};
      		cave.recv(srcVertex, srcEdge, recv);
 
+		srcEdge.dest_begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
+		
 		std::copy(recv.begin(), recv.end(), srcEdge.dest_begin);
 
 		for(Cell c: srcVertex.border){
