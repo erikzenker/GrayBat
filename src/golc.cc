@@ -230,7 +230,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      * Run Simulation
      ****************************************************************************/
      std::vector<Event> events;   
-     std::vector<unsigned> golDomain(cave.getVertices().size(), 0); 
+     std::vector<unsigned> golDomain(cave.getVertices().size() * cave.getVertex(0).core.size(), 0); 
      const Vertex root = cave.getVertex(0);
 
 
@@ -283,10 +283,6 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		auto begin = boost::make_permutation_iterator(v.border.begin(), srcEdge.destIndices.begin());
 		
 		std::copy(recv.begin(), recv.end(), begin);
-
-
-	
-		
 		
 		//for(unsigned u: srcVertex.border){
 		// for(unsigned u: testV){
@@ -296,27 +292,27 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		
      		//if(srcVertex.isAlive[0]) v.aliveNeighbors++;
      	    }
-	    std::cout << "(" << v.coordinates().first << "," << v.coordinates().second << ") ";
-	    for(Cell c: v.border){
-		std::cout << c << " " ;
-	    }
-	    std::cout << std::endl;
+	    // std::cout << "(" << v.coordinates().first << "," << v.coordinates().second << ") ";
+	    // for(Cell c: v.border){
+	    // 	std::cout << c << " " ;
+	    // }
+	    // std::cout << std::endl;
      	}
 
-     // 	// Wait to finish events
-     // 	for(unsigned i = 0; i < events.size(); ++i){
-     // 	    events.back().wait();
-     // 	    events.pop_back();
-     // 	}
+     	// Wait to finish events
+     	for(unsigned i = 0; i < events.size(); ++i){
+     	    events.back().wait();
+     	    events.pop_back();
+     	}
 
-     // 	// Calculate state for next generation
-     // 	updateState(cave.hostedVertices);
+	// Calculate state for next generation
+	//updateState(cave.hostedVertices);
 
-     // 	// Gather state by vertex with id = 0
-     // 	for(Vertex &v: cave.hostedVertices){
-     // 	    v.aliveNeighbors = 0;
-     // 	    cave.gather(root, v, v.isAlive, golDomain, true);
-     // 	}
+	//Gather state by vertex with id = 0
+	for(Vertex &v: cave.hostedVertices){
+	    //v.aliveNeighbors = 0;
+	    cave.gather(root, v, v.core, golDomain, true);
+      	}
 	
       }
     
