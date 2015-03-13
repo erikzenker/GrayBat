@@ -12,15 +12,16 @@
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
+#define WIDTH 2
+
 typedef unsigned Cell;
 
 
 struct Mesh : public graybat::graphPolicy::SimpleProperty{
     Mesh() : Mesh(0) {}
     Mesh(ID id) : SimpleProperty(id),
-		  core(9,2),
-		  border(14,0),
-		  coordinates(0,0){
+		  core{{0,1,2,3,4,5,6,7,8}},
+		  border(16,0){
       // unsigned random = rand() % 10000;
       // if(random < 3125){
       // 	isAlive[0] = 1;
@@ -30,7 +31,13 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 	
     std::vector<Cell> core;
     std::vector<Cell> border;
-    std::pair<unsigned, unsigned> coordinates;
+    std::pair<unsigned, unsigned> coordinates(){
+	unsigned x = id % WIDTH;
+	unsigned y = (id / WIDTH);
+
+	return std::make_pair(x,y);
+    }
+    
     //unsigned aliveNeighbors;
 
 
@@ -139,34 +146,52 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     // const unsigned height = sqrt(nCells);
     // const unsigned width  = height;
 
-    const unsigned height = 1;
+    const unsigned height = 2;
     const unsigned width  = 2;
     
     // Create GoL Graph
-    MyCave cave(graybat::pattern::Grid(height, width));
+    MyCave cave(graybat::pattern::GridDiagonal(height, width));
     
     // Distribute vertices
     cave.distribute(graybat::mapping::Random(1));
 
-    // Assign coordinates to grid vertices
-    for(Vertex v: cave.getVertices()){
-	unsigned id = v.id;
-
-	unsigned x = id % width;
-	unsigned y = (id / width);
-
-	v.coordinates = std::make_pair(x,y);
-
-	cave.setVertex(v);
-    }
-
+    // Think of some good way to
+    // create connections between memories
+    // of vertices --> DataChannels
     // Precompute permutation_iterator
-    for(Vertex &v: cave.getVertices()){
+    for(Vertex v: cave.getVertices()){
+	unsigned x = v.coordinates().first;
+	unsigned y = v.coordinates().second;
+
+	// std::cout << "(" << x << "," << y << ")" << std::endl;
+
+	
 	for(auto link : cave.getOutEdges(v)){
 	    Vertex destVertex = link.first.id;
 	    Edge&   destEdge   = *(cave.getEdge2(v, destVertex));
 
-	    destEdge.srcIndices = std::vector<Cell>{{2,5,8}};
+	    unsigned xDest = destVertex.coordinates().first;
+	    unsigned yDest = destVertex.coordinates().second;
+
+	    // std::cout << "dest " << destVertex.id << "(" << xDest << "," << yDest << ")" << std::endl;
+	    
+	    if(x == xDest and y < yDest) // up
+		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
+	    if(x < xDest and y < yDest) // up right
+		destEdge.srcIndices = std::vector<Cell>{{2}};
+	    if(x < xDest and y == yDest) // right
+		destEdge.srcIndices = std::vector<Cell>{{2,5,8}};
+	    if(x < xDest and y > yDest) // down right
+		destEdge.srcIndices = std::vector<Cell>{{8}};
+	    if(x == xDest and y > yDest) // down
+		destEdge.srcIndices = std::vector<Cell>{{6,7,8}};
+	    if(x > xDest and y > yDest) // down left
+		destEdge.srcIndices = std::vector<Cell>{{6}};
+	    if(x > xDest and y == yDest) // left
+		destEdge.srcIndices = std::vector<Cell>{{0,3,6}};
+	    if(x > xDest and y < yDest) // up left
+		destEdge.srcIndices = std::vector<Cell>{{0}};
+
 
 	}
 
@@ -174,8 +199,27 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    Vertex srcVertex = link.first.id;
 	    Edge&   srcEdge  = *(cave.getEdge2(srcVertex, v));
 
-	    srcEdge.destIndices = std::vector<Cell>{{6,7,8}};
+	    unsigned xSrc = srcVertex.coordinates().first;
+	    unsigned ySrc = srcVertex.coordinates().second;
 
+	    // std::cout << "src " << srcVertex.id << "(" << xSrc << "," << ySrc << ")" << std::endl;
+	    
+	    if(x == xSrc and y < ySrc) // up
+		srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
+	    if(x < xSrc and y < ySrc) // up right
+		srcEdge.destIndices = std::vector<Cell>{{3}};
+	    if(x < xSrc and y == ySrc) // right
+		srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
+	    if(x < xSrc and y > ySrc) // down right
+		srcEdge.destIndices = std::vector<Cell>{{7}};
+	    if(x == xSrc and y > ySrc) // down
+		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+	    if(x > xSrc and y > ySrc) // down left
+		srcEdge.destIndices = std::vector<Cell>{{11}};
+	    if(x > xSrc and y == ySrc) // left
+		srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
+	    if(x > xSrc and y < ySrc) // up left
+		srcEdge.destIndices = std::vector<Cell>{{15}};
 
 	}
 	
@@ -207,11 +251,16 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  Vertex& v2 = *(cave.getVertex2(v.id));
 
 		  
-		  std::array<unsigned, 3> send{{1,1,1}};
+		  std::vector<unsigned> send(destEdge.srcIndices.size(),0);
 
 		  auto begin = boost::make_permutation_iterator(v2.core.begin(), destEdge.srcIndices.begin());
 		  auto end   = boost::make_permutation_iterator(v2.core.end(), destEdge.srcIndices.end());
 
+		  // std::cout << "(" << v.id << ") ";
+		  // for(unsigned u: destEdge.srcIndices)
+		  //     std::cout << u << " ";
+		  // std::cout << std::endl;
+		  
 		  std::copy(begin, end, send.begin());
 		  
 		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
@@ -223,18 +272,19 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      	    for(auto link : cave.getInEdges(v)){
      		Vertex srcVertex = link.first;
      		Edge   srcEdge   = link.second;
-		std::array<unsigned, 3> recv{{0,0,0}};
+		std::vector<unsigned> recv(srcEdge.srcIndices.size(), 0);
      		cave.recv(srcVertex, srcEdge, recv);
 
-		auto begin = boost::make_permutation_iterator(srcVertex.border.begin(), srcEdge.destIndices.begin());
+		// std::cout << "(" << v.id << ") ";
+		// for(unsigned u: srcEdge.destIndices)
+		//     std::cout << u << " ";
+		// std::cout << std::endl;
+		
+		auto begin = boost::make_permutation_iterator(v.border.begin(), srcEdge.destIndices.begin());
 		
 		std::copy(recv.begin(), recv.end(), begin);
 
-		std::cout << "v" << v.id << " ";
-		for(Cell c: srcVertex.border){
-		    std::cout << c << " " ;
-		}
-		std::cout << std::endl;
+
 	
 		
 		
@@ -246,6 +296,11 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		
      		//if(srcVertex.isAlive[0]) v.aliveNeighbors++;
      	    }
+	    std::cout << "(" << v.coordinates().first << "," << v.coordinates().second << ") ";
+	    for(Cell c: v.border){
+		std::cout << c << " " ;
+	    }
+	    std::cout << std::endl;
      	}
 
      // 	// Wait to finish events
