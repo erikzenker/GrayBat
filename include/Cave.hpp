@@ -496,10 +496,13 @@ namespace graybat {
 	    static std::vector<SendValueType> gather;
 	    static T_Recv* rootRecvData     = NULL;
 	    static bool peerHostsRootVertex = false;
+	    static unsigned nGatherCalls    = 0;
+
+	    nGatherCalls++;
 
 	    VAddr rootVAddr  = locateVertex(graph, rootVertex);
 	    Context context  = getGraphContext(graph);
-	    
+
 	    // Insert data of srcVertex to the end of the gather vector
 	    gather.insert(gather.end(), sendData.begin(), sendData.end());
 
@@ -509,26 +512,46 @@ namespace graybat {
 		peerHostsRootVertex = true;
 	    }
 
-	    if(gather.size() == hostedVertices.size()){
+	    if(nGatherCalls == hostedVertices.size()){
 		std::vector<unsigned> recvCount;
+		std::vector<unsigned> prefixsum(context.size(),0);
 
 		if(peerHostsRootVertex){
 		    cal.gatherVar(rootVAddr, context, gather, *rootRecvData, recvCount);
 
+		    // std::partial_sum might do the job
+		    unsigned sum = 0;
+		    for(unsigned count_i = 0; count_i < recvCount.size(); ++count_i){
+			std::cout << sum << std::endl;
+			prefixsum[count_i] = sum;
+			sum += recvCount[count_i];
+		    }
+		    
+		    for(auto a: recvCount)
+			std::cout << a << std::endl;
+
 		    // Reordering code
 		    if(reorder){
 			std::vector<RecvValueType> recvDataReordered(recvData.size());
-			unsigned recv_i = 0;
 			for(unsigned vAddr = 0; vAddr < context.size(); vAddr++){
 			    std::vector<Vertex> hostedVertices = getHostedVertices(graph, vAddr);
+			    unsigned nElementsPerVertex = recvCount.at(vAddr) / hostedVertices.size();
+
+			    unsigned hVertex_i=0;
 			    for(Vertex v: hostedVertices){
-				assert(recv_i < recvData.size());
-				recvDataReordered.at(v.id) = rootRecvData->at(recv_i);
-				recv_i++;
+
+				std::copy(rootRecvData->begin()+(prefixsum[vAddr] + (hVertex_i * nElementsPerVertex)),
+					  rootRecvData->begin()+(prefixsum[vAddr] + (hVertex_i * nElementsPerVertex)) + (nElementsPerVertex),
+					  recvDataReordered.begin()+(v.id*nElementsPerVertex));
+
 			    }
 			    
 			}
 			std::copy(recvDataReordered.begin(), recvDataReordered.end(), rootRecvData->begin());
+
+			for(auto a: *rootRecvData)
+			    std::cout << a;
+			std::cout << std::endl;
 
 		    }
 		

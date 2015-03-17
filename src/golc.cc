@@ -153,7 +153,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     MyCave cave(graybat::pattern::GridDiagonal(height, width));
     
     // Distribute vertices
-    cave.distribute(graybat::mapping::Random(1));
+    cave.distribute(graybat::mapping::Roundrobin());
 
     // Think of some good way to
     // create connections between memories
@@ -237,10 +237,10 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      // Simulate life 
       for(unsigned timestep = 0; timestep < nTimeSteps; ++timestep){
 
-     // 	// Print life field by owner of vertex 0
-     // 	if(cave.peerHostsVertex(root)){
-     // 	    printGolDomain(golDomain, width, height, timestep);
-     // 	}
+     	// // Print life field by owner of vertex 0
+     	// if(cave.peerHostsVertex(root)){
+     	//     printGolDomain(golDomain, width, height, timestep);
+     	// }
 	
 	  // Send state to neighbor cells
 	  for(Vertex &v : cave.hostedVertices){
@@ -313,6 +313,12 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    //v.aliveNeighbors = 0;
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
+
+	if(cave.peerHostsVertex(root)){
+	    for(auto a: golDomain)
+		std::cout << a;
+	    std::cout << std::endl;
+	}
 	
       }
     
