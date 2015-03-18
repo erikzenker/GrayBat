@@ -522,13 +522,13 @@ namespace graybat {
 		    // std::partial_sum might do the job
 		    unsigned sum = 0;
 		    for(unsigned count_i = 0; count_i < recvCount.size(); ++count_i){
-			std::cout << sum << std::endl;
+			// std::cout << sum << std::endl;
 			prefixsum[count_i] = sum;
 			sum += recvCount[count_i];
 		    }
 		    
-		    for(auto a: recvCount)
-			std::cout << a << std::endl;
+		    // for(auto a: recvCount)
+		    // 	std::cout << a << std::endl;
 
 		    // Reordering code
 		    if(reorder){
@@ -549,9 +549,9 @@ namespace graybat {
 			}
 			std::copy(recvDataReordered.begin(), recvDataReordered.end(), rootRecvData->begin());
 
-			for(auto a: *rootRecvData)
-			    std::cout << a;
-			std::cout << std::endl;
+			// for(auto a: *rootRecvData)
+			//     std::cout << a;
+			// std::cout << std::endl;
 
 		    }
 		
@@ -561,6 +561,7 @@ namespace graybat {
 		}
 	    
 		gather.clear();
+		nGatherCalls = 0;
 
 	    }
 

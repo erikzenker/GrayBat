@@ -8,11 +8,12 @@
 #include <cmath>      /* sqrt */
 #include <cstdlib>    /* atoi */
 #include <utility>    /* std::pair, std::make_pair */
+#include <algorithm>  /* std::transform */
 
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
-#define WIDTH 2
+#define WIDTH 10
 
 typedef unsigned Cell;
 
@@ -20,12 +21,16 @@ typedef unsigned Cell;
 struct Mesh : public graybat::graphPolicy::SimpleProperty{
     Mesh() : Mesh(0) {}
     Mesh(ID id) : SimpleProperty(id),
-		  core{{0,1,2,3,4,5,6,7,8}},
-		  border(16,0){
-      // unsigned random = rand() % 10000;
-      // if(random < 3125){
-      // 	isAlive[0] = 1;
-      // }
+		  core(9,0),
+		  border(16,0)
+    {
+	for(auto &c: core){
+	    unsigned random = rand() % 10000;
+	    if(random < 3125){
+		c = 1;
+	    }
+			  
+	}
 
     }
 	
@@ -81,9 +86,9 @@ void printGolDomain(const std::vector<unsigned> domain, const unsigned width, co
 }
 
 
-template <class T_Cell>
-void updateState(std::vector<T_Cell> &cells){
-    for(T_Cell &cell : cells){
+template <class T>
+void updateState(std::vector<T> &cells){
+    for(T &cell : cells){
 	updateState(cell);
 
     }
@@ -91,28 +96,71 @@ void updateState(std::vector<T_Cell> &cells){
 }
 
 
-template <class T_Cell>
-void updateState(T_Cell &cell){
-    switch(cell.aliveNeighbors){
+template <class T>
+void updateState(T &cell){
+    std::array<std::vector<unsigned>, 9> coreNeighbors;
+    std::array<std::vector<unsigned>, 9> borderNeighbors;
 
-    case 0:
-    case 1:
-	cell.isAlive[0] = 0;
-	break;
+    borderNeighbors[0] = std::vector<unsigned>{{15,14,13,0,2}};
+    borderNeighbors[1] = std::vector<unsigned>{{0,1,2}};
+    borderNeighbors[2] = std::vector<unsigned>{{1,2,3,4,5}};
+    borderNeighbors[3] = std::vector<unsigned>{{14,13,12}};
+    borderNeighbors[4] = std::vector<unsigned>{{}};
+    borderNeighbors[5] = std::vector<unsigned>{{4,5,6}};
+    borderNeighbors[6] = std::vector<unsigned>{{13,12,11,10,9}};
+    borderNeighbors[7] = std::vector<unsigned>{{8,9,10}};
+    borderNeighbors[8] = std::vector<unsigned>{{5,6,7,8,9}};
 
-    case 2:
-	cell.isAlive[0] = cell.isAlive[0];
-	break;
+    coreNeighbors[0] = std::vector<unsigned>{{1,3,4}};
+    coreNeighbors[1] = std::vector<unsigned>{{0,2,3,4,5}};
+    coreNeighbors[2] = std::vector<unsigned>{{1,4,5}};
+    coreNeighbors[3] = std::vector<unsigned>{{0,1,4,6,7}};
+    coreNeighbors[4] = std::vector<unsigned>{{0,1,2,3,5,6,7,8}};
+    coreNeighbors[5] = std::vector<unsigned>{{1,2,4,7,8}};
+    coreNeighbors[6] = std::vector<unsigned>{{3,4,7}};
+    coreNeighbors[7] = std::vector<unsigned>{{6,3,4,5,8}};
+    coreNeighbors[8] = std::vector<unsigned>{{7,4,5}};
+    
+
+ 
+    for(unsigned i = 0; i < cell.core.size(); i++){
+    	unsigned nNeighbors = 0;
+    	for(auto c: coreNeighbors[i]){
+    	    if(cell.core[c] > 0){
+    		nNeighbors++;
+    	    }
+    	}
+
+    	for(auto b: borderNeighbors[i]){
+    	    if(cell.border[b] > 0){
+    		nNeighbors++;
+    	    }
+    	}
+
+    	//cell.core[i] = (cell.core[i] + 1 ) % 2;
+
+	switch(nNeighbors){
+
+    	case 0:
+    	case 1:
+    	    cell.core[i] = 0;
+    	    break;
+
+    	case 2:
+    	    cell.core[i] = cell.core[i];
+    	    break;
 	    
-    case 3: 
-	cell.isAlive[0] = 1;
-	break;
+    	case 3: 
+    	    cell.core[i] = 1;
+    	    break;
 
-    default: 
-	cell.isAlive[0] = 0;
-	break;
+    	default: 
+    	    cell.core[i] = 0;
+    	    break;
 
-    };
+    	};
+
+    }
 
 }
 
@@ -146,8 +194,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     // const unsigned height = sqrt(nCells);
     // const unsigned width  = height;
 
-    const unsigned height = 2;
-    const unsigned width  = 2;
+    const unsigned height = 10;
+    const unsigned width  = 10;
     
     // Create GoL Graph
     MyCave cave(graybat::pattern::GridDiagonal(height, width));
@@ -237,10 +285,10 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      // Simulate life 
       for(unsigned timestep = 0; timestep < nTimeSteps; ++timestep){
 
-     	// // Print life field by owner of vertex 0
-     	// if(cave.peerHostsVertex(root)){
-     	//     printGolDomain(golDomain, width, height, timestep);
-     	// }
+     	// Print life field by owner of vertex 0
+     	if(cave.peerHostsVertex(root)){
+     	    printGolDomain(golDomain, width*3, height*3, timestep);
+     	}
 	
 	  // Send state to neighbor cells
 	  for(Vertex &v : cave.hostedVertices){
@@ -248,13 +296,12 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  Vertex destVertex = link.first;
 		  Edge   destEdge   = link.second;
 
-		  Vertex& v2 = *(cave.getVertex2(v.id));
+		  //Vertex& v2 = *(cave.getVertex2(v.id));
 
-		  
 		  std::vector<unsigned> send(destEdge.srcIndices.size(),0);
 
-		  auto begin = boost::make_permutation_iterator(v2.core.begin(), destEdge.srcIndices.begin());
-		  auto end   = boost::make_permutation_iterator(v2.core.end(), destEdge.srcIndices.end());
+		  auto begin = boost::make_permutation_iterator(v.core.begin(), destEdge.srcIndices.begin());
+		  auto end   = boost::make_permutation_iterator(v.core.end(), destEdge.srcIndices.end());
 
 		  // std::cout << "(" << v.id << ") ";
 		  // for(unsigned u: destEdge.srcIndices)
@@ -306,19 +353,21 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      	}
 
 	// Calculate state for next generation
-	//updateState(cave.hostedVertices);
+	updateState(cave.hostedVertices);
 
 	//Gather state by vertex with id = 0
 	for(Vertex &v: cave.hostedVertices){
 	    //v.aliveNeighbors = 0;
+	    //std::for_each(v.core.begin(), v.core.end(), [](unsigned& a){a = (a + 1) % 2;});
+	    std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
 
-	if(cave.peerHostsVertex(root)){
-	    for(auto a: golDomain)
-		std::cout << a;
-	    std::cout << std::endl;
-	}
+	 // if(cave.peerHostsVertex(root)){
+	 //     for(auto a: golDomain)
+	 // 	std::cout << a;
+	 //     std::cout << std::endl;
+	 // }
 	
       }
     
