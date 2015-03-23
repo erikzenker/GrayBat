@@ -13,7 +13,7 @@
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
-#define WIDTH 10
+#define WIDTH 20
 
 typedef unsigned Cell;
 
@@ -25,10 +25,16 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 		  border(16,0)
     {
 	for(auto &c: core){
-	    unsigned random = rand() % 10000;
-	    if(random < 3125){
+	    if(coordinates().first == 1){
 		c = 1;
 	    }
+	    else {
+		c = 0;
+	    }
+	    // unsigned random = rand() % 10000;
+	    // if(random < 3125){
+	    // 	c = 1;
+	    // }
 			  
 	}
 
@@ -43,9 +49,6 @@ struct Mesh : public graybat::graphPolicy::SimpleProperty{
 	return std::make_pair(x,y);
     }
     
-    //unsigned aliveNeighbors;
-
-
 };
 
 struct Link : public graybat::graphPolicy::SimpleProperty{
@@ -64,13 +67,26 @@ struct Link : public graybat::graphPolicy::SimpleProperty{
 
 
 
-void printGolDomain(const std::vector<unsigned> domain, const unsigned width, const unsigned height, const unsigned generation){
+void printGolDomain(const std::vector<unsigned> domain, const unsigned width, const unsigned height, const unsigned subWidth, const unsigned generation){
+
     for(unsigned i = 0; i < domain.size(); ++i){
+
+
+	unsigned quad = subWidth * subWidth;
+	unsigned cube = quad * subWidth;
+
+	unsigned x = unsigned((i % quad) / subWidth);
+	unsigned y = unsigned((i % cube) / subWidth);
+	unsigned n = unsigned((i % cube) % quad);
+	
+	unsigned j =  (x * quad) + (y * cube) + n;
+	//std::cout << x << " " << y << " " << n << " " << j << std::endl;
+	
 	if((i % (width)) == 0){
 	    std::cerr << std::endl;
 	}
 
-	if(domain.at(i)){
+	if(domain.at(j)){
 	  std::cerr << "#";
 	}
 	else {
@@ -139,26 +155,26 @@ void updateState(T &cell){
 
     	//cell.core[i] = (cell.core[i] + 1 ) % 2;
 
-	switch(nNeighbors){
+	// switch(nNeighbors){
 
-    	case 0:
-    	case 1:
-    	    cell.core[i] = 0;
-    	    break;
+    	// case 0:
+    	// case 1:
+    	//     cell.core[i] = 0;
+    	//     break;
 
-    	case 2:
-    	    cell.core[i] = cell.core[i];
-    	    break;
+    	// case 2:
+    	//     cell.core[i] = cell.core[i];
+    	//     break;
 	    
-    	case 3: 
-    	    cell.core[i] = 1;
-    	    break;
+    	// case 3: 
+    	//     cell.core[i] = 1;
+    	//     break;
 
-    	default: 
-    	    cell.core[i] = 0;
-    	    break;
+    	// default: 
+    	//     cell.core[i] = 0;
+    	//     break;
 
-    	};
+    	// };
 
     }
 
@@ -194,8 +210,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     // const unsigned height = sqrt(nCells);
     // const unsigned width  = height;
 
-    const unsigned height = 10;
-    const unsigned width  = 10;
+    const unsigned height = WIDTH;
+    const unsigned width  = WIDTH;
     
     // Create GoL Graph
     MyCave cave(graybat::pattern::GridDiagonal(height, width));
@@ -287,7 +303,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 
      	// Print life field by owner of vertex 0
      	if(cave.peerHostsVertex(root)){
-     	    printGolDomain(golDomain, width*3, height*3, timestep);
+     	    printGolDomain(golDomain, width*3, height*3, 3, timestep);
      	}
 	
 	  // Send state to neighbor cells
@@ -310,7 +326,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  
 		  std::copy(begin, end, send.begin());
 		  
-		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
+		  //events.push_back(cave.asyncSend(destVertex, destEdge, send));
 	      }
 	  }
 
@@ -320,7 +336,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      		Vertex srcVertex = link.first;
      		Edge   srcEdge   = link.second;
 		std::vector<unsigned> recv(srcEdge.srcIndices.size(), 0);
-     		cave.recv(srcVertex, srcEdge, recv);
+     		//cave.recv(srcVertex, srcEdge, recv);
 
 		// std::cout << "(" << v.id << ") ";
 		// for(unsigned u: srcEdge.destIndices)
@@ -359,7 +375,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	for(Vertex &v: cave.hostedVertices){
 	    //v.aliveNeighbors = 0;
 	    //std::for_each(v.core.begin(), v.core.end(), [](unsigned& a){a = (a + 1) % 2;});
-	    std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
+	    //std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
 
