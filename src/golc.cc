@@ -25,11 +25,11 @@ struct SubGrid : public graybat::graphPolicy::SimpleProperty{
 		  border(16,0)
     {
 	for(unsigned i = 0; i < core.size();++i){
-	    unsigned random = rand() % 10000;
+	    //unsigned random = rand() % 10000;
 	    //std::cout << id << " " << random << std::endl;
-	    if(random < 3125){
+	    //if(random < 3125){
 		core.at(i) = id;
-	    }
+		//}
 	}
 
     }
@@ -386,7 +386,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    //v.aliveNeighbors = 0;
 	    //std::for_each(v.core.begin(), v.core.end(), [](unsigned& a){a = (a + 1) % 2;});
 	    //std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
-	    cave.gather(root, v, v.core, golDomain, true);
+	    cave.gather(root, v, v.core, golDomain, false);
       	}
 
 	 // if(cave.peerHostsVertex(root)){

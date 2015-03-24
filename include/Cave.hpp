@@ -503,8 +503,12 @@ namespace graybat {
 	    VAddr rootVAddr  = locateVertex(graph, rootVertex);
 	    Context context  = getGraphContext(graph);
 
+	    //std::cout << sendData[0] << std::endl;
+	    
 	    // Insert data of srcVertex to the end of the gather vector
 	    gather.insert(gather.end(), sendData.begin(), sendData.end());
+
+	    //std::cout << gather.back() << std::endl;
 
 	    // Store recv pointer of rootVertex
 	    if(srcVertex.id == rootVertex.id){
