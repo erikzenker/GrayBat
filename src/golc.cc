@@ -13,7 +13,7 @@
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
-#define WIDTH 2
+#define WIDTH 20
 
 typedef unsigned Cell;
 
@@ -21,15 +21,15 @@ typedef unsigned Cell;
 struct SubGrid : public graybat::graphPolicy::SimpleProperty{
     SubGrid() : SubGrid(0) {}
     SubGrid(ID id) : SimpleProperty(id),
-		     core(9,1),
+		     core(9,0),
 		  border(16,0)
     {
-	for(unsigned i = 0; i < core.size();++i){
-	    //unsigned random = rand() % 10000;
-	    //std::cout << id << " " << random << std::endl;
-	    //if(random < 3125){
-		core.at(i) = id;
-		//}
+	for(auto &c : core){
+	    unsigned random = rand() % 10000;
+	    if(random < 3125){
+		c = 1;
+	    }
+
 	}
 
     }
@@ -88,19 +88,17 @@ void printGolDomain(const std::vector<unsigned> domain, const unsigned width, co
 
 	unsigned j = (x * subgridX * subgridY) + (y * subgridX * subgridY * gridX) + n;
 	
-	std::cerr << domain.at(j) << " ";
+	//std::cerr << domain.at(j) << " ";
 	
-	// if(domain.at(j)){
-	//   std::cerr << "#";
-	// }
-	// else {
-	//     std::cerr << " ";
-	// }
-
-
-	
+	if(domain.at(j)){
+	  std::cerr << "#";
+	}
+	else {
+	    std::cerr << " ";
+	}
 
     }
+    
     std::cerr << "Generation: " << generation << std::endl;
     for(unsigned i = 0; i < height+1; ++i){
 	std::cerr << "\033[F";
@@ -162,26 +160,26 @@ void updateState(T &cell){
 
     	//cell.core[i] = (cell.core[i] + 1 ) % 2;
 
-	// switch(nNeighbors){
+	switch(nNeighbors){
 
-    	// case 0:
-    	// case 1:
-    	//     cell.core[i] = 0;
-    	//     break;
+    	case 0:
+    	case 1:
+    	    cell.core[i] = 0;
+    	    break;
 
-    	// case 2:
-    	//     cell.core[i] = cell.core[i];
-    	//     break;
+    	case 2:
+    	    cell.core[i] = cell.core[i];
+    	    break;
 	    
-    	// case 3: 
-    	//     cell.core[i] = 1;
-    	//     break;
+    	case 3: 
+    	    cell.core[i] = 1;
+    	    break;
 
-    	// default: 
-    	//     cell.core[i] = 0;
-    	//     break;
+    	default: 
+    	    cell.core[i] = 0;
+    	    break;
 
-    	// };
+    	};
 
     }
 
@@ -334,9 +332,9 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  //     std::cout << u << " ";
 		  // std::cout << std::endl;
 		  
-		  //std::copy(begin, end, send.begin());
+		  std::copy(begin, end, send.begin());
 		  
-		  //events.push_back(cave.asyncSend(destVertex, destEdge, send));
+		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
 	      }
 	  }
 
@@ -346,7 +344,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      		Vertex srcVertex = link.first;
      		Edge   srcEdge   = link.second;
 		std::vector<unsigned> recv(srcEdge.srcIndices.size(), 0);
-     		//cave.recv(srcVertex, srcEdge, recv);
+     		cave.recv(srcVertex, srcEdge, recv);
 
 		// std::cout << "(" << v.id << ") ";
 		// for(unsigned u: srcEdge.destIndices)
@@ -355,7 +353,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		
 		auto begin = boost::make_permutation_iterator(v.border.begin(), srcEdge.destIndices.begin());
 		
-		//std::copy(recv.begin(), recv.end(), begin);
+		std::copy(recv.begin(), recv.end(), begin);
 		
 		//for(unsigned u: srcVertex.border){
 		// for(unsigned u: testV){
@@ -386,7 +384,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    //v.aliveNeighbors = 0;
 	    //std::for_each(v.core.begin(), v.core.end(), [](unsigned& a){a = (a + 1) % 2;});
 	    //std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
-	    cave.gather(root, v, v.core, golDomain, false);
+	    cave.gather(root, v, v.core, golDomain, true);
       	}
 
 	 // if(cave.peerHostsVertex(root)){

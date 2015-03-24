@@ -547,6 +547,7 @@ namespace graybat {
 				std::copy(rootRecvData->begin()+(prefixsum[vAddr] + (hVertex_i * nElementsPerVertex)),
 					  rootRecvData->begin()+(prefixsum[vAddr] + (hVertex_i * nElementsPerVertex)) + (nElementsPerVertex),
 					  recvDataReordered.begin()+(v.id*nElementsPerVertex));
+				hVertex_i++;
 
 			    }
 			    
