@@ -13,7 +13,7 @@
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
-#define WIDTH 20
+#define WIDTH 30
 
 typedef unsigned Cell;
 
@@ -88,8 +88,6 @@ void printGolDomain(const std::vector<unsigned> domain, const unsigned width, co
 
 	unsigned j = (x * subgridX * subgridY) + (y * subgridX * subgridY * gridX) + n;
 	
-	//std::cerr << domain.at(j) << " ";
-	
 	if(domain.at(j)){
 	  std::cerr << "#";
 	}
@@ -157,8 +155,6 @@ void updateState(T &cell){
     		nNeighbors++;
     	    }
     	}
-
-    	//cell.core[i] = (cell.core[i] + 1 ) % 2;
 
 	switch(nNeighbors){
 
@@ -235,9 +231,6 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	unsigned x = v.coordinates().first;
 	unsigned y = v.coordinates().second;
 
-	// std::cout << "(" << x << "," << y << ")" << std::endl;
-
-	
 	for(auto link : cave.getOutEdges(v)){
 	    Vertex destVertex = link.first.id;
 	    Edge&   destEdge   = *(cave.getEdge2(v, destVertex));
@@ -245,8 +238,6 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned xDest = destVertex.coordinates().first;
 	    unsigned yDest = destVertex.coordinates().second;
 
-	    // std::cout << "dest " << destVertex.id << "(" << xDest << "," << yDest << ")" << std::endl;
-	    
 	    if(x == xDest and y < yDest) // up
 		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
 	    if(x < xDest and y < yDest) // up right
@@ -274,8 +265,6 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned xSrc = srcVertex.coordinates().first;
 	    unsigned ySrc = srcVertex.coordinates().second;
 
-	    // std::cout << "src " << srcVertex.id << "(" << xSrc << "," << ySrc << ")" << std::endl;
-	    
 	    if(x == xSrc and y < ySrc) // up
 		srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
 	    if(x < xSrc and y < ySrc) // up right
@@ -320,18 +309,10 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 		  Vertex destVertex = link.first;
 		  Edge   destEdge   = link.second;
 
-		  //Vertex& v2 = *(cave.getVertex2(v.id));
-
 		  std::vector<unsigned> send(destEdge.srcIndices.size(),0);
 
 		  auto begin = boost::make_permutation_iterator(v.core.begin(), destEdge.srcIndices.begin());
 		  auto end   = boost::make_permutation_iterator(v.core.end(), destEdge.srcIndices.end());
-
-		  // std::cout << "(" << v.id << ") ";
-		  // for(unsigned u: destEdge.srcIndices)
-		  //     std::cout << u << " ";
-		  // std::cout << std::endl;
-		  
 		  std::copy(begin, end, send.begin());
 		  
 		  events.push_back(cave.asyncSend(destVertex, destEdge, send));
@@ -345,29 +326,12 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
      		Edge   srcEdge   = link.second;
 		std::vector<unsigned> recv(srcEdge.srcIndices.size(), 0);
      		cave.recv(srcVertex, srcEdge, recv);
-
-		// std::cout << "(" << v.id << ") ";
-		// for(unsigned u: srcEdge.destIndices)
-		//     std::cout << u << " ";
-		// std::cout << std::endl;
 		
 		auto begin = boost::make_permutation_iterator(v.border.begin(), srcEdge.destIndices.begin());
-		
 		std::copy(recv.begin(), recv.end(), begin);
 		
-		//for(unsigned u: srcVertex.border){
-		// for(unsigned u: testV){
-		//     std::cout << u << " ";
-		// }
-		// std::cout << std::endl;
-		
-     		//if(srcVertex.isAlive[0]) v.aliveNeighbors++;
      	    }
-	    // std::cout << "(" << v.coordinates().first << "," << v.coordinates().second << ") ";
-	    // for(Cell c: v.border){
-	    // 	std::cout << c << " " ;
-	    // }
-	    // std::cout << std::endl;
+	    
      	}
 
      	// Wait to finish events
@@ -381,17 +345,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 
 	//Gather state by vertex with id = 0
 	for(Vertex &v: cave.hostedVertices){
-	    //v.aliveNeighbors = 0;
-	    //std::for_each(v.core.begin(), v.core.end(), [](unsigned& a){a = (a + 1) % 2;});
-	    //std::for_each(golDomain.begin(), golDomain.end(), [](unsigned& a){a = 0;});
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
-
-	 // if(cave.peerHostsVertex(root)){
-	 //     for(auto a: golDomain)
-	 // 	std::cout << a;
-	 //     std::cout << std::endl;
-	 // }
 	
       }
     
