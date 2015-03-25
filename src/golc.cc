@@ -13,7 +13,9 @@
 // Boost
 #include <boost/iterator/permutation_iterator.hpp> /* boost::make_permutation_iterator*/
 
-#define WIDTH 30
+#include <unistd.h>
+
+#define WIDTH 4
 
 typedef unsigned Cell;
 
@@ -25,10 +27,13 @@ struct SubGrid : public graybat::graphPolicy::SimpleProperty{
 		  border(16,0)
     {
 	for(auto &c : core){
-	    unsigned random = rand() % 10000;
-	    if(random < 3125){
+	    if(id > 14)
 		c = 1;
-	    }
+	    
+	    // unsigned random = rand() % 10000;
+	    // if(random < 3125){
+	    // 	c = 1;
+	    // }
 
 	}
 
@@ -120,15 +125,15 @@ void updateState(T &cell){
     std::array<std::vector<unsigned>, 9> coreNeighbors;
     std::array<std::vector<unsigned>, 9> borderNeighbors;
 
-    borderNeighbors[0] = std::vector<unsigned>{{15,14,13,0,2}};
-    borderNeighbors[1] = std::vector<unsigned>{{0,1,2}};
-    borderNeighbors[2] = std::vector<unsigned>{{1,2,3,4,5}};
-    borderNeighbors[3] = std::vector<unsigned>{{14,13,12}};
-    borderNeighbors[4] = std::vector<unsigned>{{}};
-    borderNeighbors[5] = std::vector<unsigned>{{4,5,6}};
-    borderNeighbors[6] = std::vector<unsigned>{{13,12,11,10,9}};
+    // borderNeighbors[0] = std::vector<unsigned>{{15,14,13,0,2}};
+    // borderNeighbors[1] = std::vector<unsigned>{{0,1,2}};
+    // borderNeighbors[2] = std::vector<unsigned>{{1,2,3,4,5}};
+    // borderNeighbors[3] = std::vector<unsigned>{{14,13,12}};
+    // borderNeighbors[4] = std::vector<unsigned>{{}};
+    // borderNeighbors[5] = std::vector<unsigned>{{4,5,6}};
+    //borderNeighbors[6] = std::vector<unsigned>{{13,12,11,10,9}};
     borderNeighbors[7] = std::vector<unsigned>{{8,9,10}};
-    borderNeighbors[8] = std::vector<unsigned>{{5,6,7,8,9}};
+    //borderNeighbors[8] = std::vector<unsigned>{{5,6,7,8,9}};
 
     coreNeighbors[0] = std::vector<unsigned>{{1,3,4}};
     coreNeighbors[1] = std::vector<unsigned>{{0,2,3,4,5}};
@@ -144,11 +149,11 @@ void updateState(T &cell){
  
     for(unsigned i = 0; i < cell.core.size(); i++){
     	unsigned nNeighbors = 0;
-    	for(auto c: coreNeighbors[i]){
-    	    if(cell.core[c] > 0){
-    		nNeighbors++;
-    	    }
-    	}
+    	// for(auto c: coreNeighbors[i]){
+    	//     if(cell.core[c] > 0){
+    	// 	nNeighbors++;
+    	//     }
+    	// }
 
     	for(auto b: borderNeighbors[i]){
     	    if(cell.border[b] > 0){
@@ -156,26 +161,29 @@ void updateState(T &cell){
     	    }
     	}
 
-	switch(nNeighbors){
+	if(nNeighbors > 0)
+	    cell.core[i] = 1;
+	
+	// switch(nNeighbors){
 
-    	case 0:
-    	case 1:
-    	    cell.core[i] = 0;
-    	    break;
+    	// case 0:
+    	// case 1:
+    	//     cell.core[i] = cell.core[i];
+    	//     break;
 
-    	case 2:
-    	    cell.core[i] = cell.core[i];
-    	    break;
+    	// case 2:
+    	//     cell.core[i] = cell.core[i];
+    	//     break;
 	    
-    	case 3: 
-    	    cell.core[i] = 1;
-    	    break;
+    	// case 3: 
+    	//     cell.core[i] = 1;
+    	//     break;
 
-    	default: 
-    	    cell.core[i] = 0;
-    	    break;
+    	// default: 
+    	//     cell.core[i] = cell.core[i];
+    	//     break;
 
-    	};
+    	// };
 
     }
 
@@ -238,6 +246,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned xDest = destVertex.coordinates().first;
 	    unsigned yDest = destVertex.coordinates().second;
 
+	    // Src indices from core
 	    if(x == xDest and y < yDest) // up
 		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
 	    if(x < xDest and y < yDest) // up right
@@ -265,22 +274,31 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned xSrc = srcVertex.coordinates().first;
 	    unsigned ySrc = srcVertex.coordinates().second;
 
+	    // Dest indices from border
 	    if(x == xSrc and y < ySrc) // up
-		srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
+		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+	    //srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
 	    if(x < xSrc and y < ySrc) // up right
-		srcEdge.destIndices = std::vector<Cell>{{3}};
+		srcEdge.destIndices = std::vector<Cell>{{11}};
+	    //srcEdge.destIndices = std::vector<Cell>{{3}};
 	    if(x < xSrc and y == ySrc) // right
-		srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
+		srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
+		//srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
 	    if(x < xSrc and y > ySrc) // down right
-		srcEdge.destIndices = std::vector<Cell>{{7}};
+		srcEdge.destIndices = std::vector<Cell>{{15}};
+		//srcEdge.destIndices = std::vector<Cell>{{7}};
 	    if(x == xSrc and y > ySrc) // down
 		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+	    //srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
 	    if(x > xSrc and y > ySrc) // down left
-		srcEdge.destIndices = std::vector<Cell>{{11}};
+		srcEdge.destIndices = std::vector<Cell>{{3}};
+		//srcEdge.destIndices = std::vector<Cell>{{11}};
 	    if(x > xSrc and y == ySrc) // left
-		srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
+		srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
+		//srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
 	    if(x > xSrc and y < ySrc) // up left
-		srcEdge.destIndices = std::vector<Cell>{{15}};
+		srcEdge.destIndices = std::vector<Cell>{{7}};
+		//srcEdge.destIndices = std::vector<Cell>{{15}};
 
 	}
 	
@@ -347,6 +365,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	for(Vertex &v: cave.hostedVertices){
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
+
+	usleep(1000000);
 	
       }
     
