@@ -26,9 +26,12 @@ struct SubGrid : public graybat::graphPolicy::SimpleProperty{
 		     core(9,0),
 		  border(16,0)
     {
-	for(auto &c : core){
-	    if(id > 14)
-		c = 1;
+	for(unsigned i = 0; i < core.size(); ++i){
+	    if(id > 14){
+		if(i < 3){
+		    core[i] = 1;
+		}
+	    }
 	    
 	    // unsigned random = rand() % 10000;
 	    // if(random < 3125){
@@ -239,6 +242,8 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	unsigned x = v.coordinates().first;
 	unsigned y = v.coordinates().second;
 
+	//std::cout << x << " " << y << std::endl;
+
 	for(auto link : cave.getOutEdges(v)){
 	    Vertex destVertex = link.first.id;
 	    Edge&   destEdge   = *(cave.getEdge2(v, destVertex));
@@ -246,17 +251,26 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned xDest = destVertex.coordinates().first;
 	    unsigned yDest = destVertex.coordinates().second;
 
+	    //std::cout << "-->" << xDest << " " << yDest << std::endl;
+
 	    // Src indices from core
 	    if(x == xDest and y < yDest) // up
 		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
+		//destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
+	    
 	    if(x < xDest and y < yDest) // up right
 		destEdge.srcIndices = std::vector<Cell>{{2}};
 	    if(x < xDest and y == yDest) // right
 		destEdge.srcIndices = std::vector<Cell>{{2,5,8}};
 	    if(x < xDest and y > yDest) // down right
 		destEdge.srcIndices = std::vector<Cell>{{8}};
+
+	    
 	    if(x == xDest and y > yDest) // down
-		destEdge.srcIndices = std::vector<Cell>{{6,7,8}};
+		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
+		//destEdge.srcIndices = std::vector<Cell>{{6,7,8}};
+
+	    
 	    if(x > xDest and y > yDest) // down left
 		destEdge.srcIndices = std::vector<Cell>{{6}};
 	    if(x > xDest and y == yDest) // left
@@ -287,9 +301,13 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    if(x < xSrc and y > ySrc) // down right
 		srcEdge.destIndices = std::vector<Cell>{{15}};
 		//srcEdge.destIndices = std::vector<Cell>{{7}};
+	    
+
 	    if(x == xSrc and y > ySrc) // down
-		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+		srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
 	    //srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+
+
 	    if(x > xSrc and y > ySrc) // down left
 		srcEdge.destIndices = std::vector<Cell>{{3}};
 		//srcEdge.destIndices = std::vector<Cell>{{11}};
