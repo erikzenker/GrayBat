@@ -15,7 +15,7 @@
 
 #include <unistd.h>
 
-#define WIDTH 4
+#define WIDTH 25
 
 typedef unsigned Cell;
 
@@ -27,16 +27,16 @@ struct SubGrid : public graybat::graphPolicy::SimpleProperty{
 		  border(16,0)
     {
 	for(unsigned i = 0; i < core.size(); ++i){
-	    if(id > 14){
-		if(i < 3){
-		    core[i] = 1;
-		}
-	    }
-	    
-	    // unsigned random = rand() % 10000;
-	    // if(random < 3125){
-	    // 	c = 1;
+	    // if(id > 14){
+	    // 	//if(i < 3){
+	    // 	    core[i] = 1;
+	    // 	    //}
 	    // }
+	    
+	    unsigned random = rand() % 10000;
+	    if(random < 3125){
+	    	core[i] = 1;
+	    }
 
 	}
 
@@ -128,15 +128,15 @@ void updateState(T &cell){
     std::array<std::vector<unsigned>, 9> coreNeighbors;
     std::array<std::vector<unsigned>, 9> borderNeighbors;
 
-    // borderNeighbors[0] = std::vector<unsigned>{{15,14,13,0,2}};
-    // borderNeighbors[1] = std::vector<unsigned>{{0,1,2}};
-    // borderNeighbors[2] = std::vector<unsigned>{{1,2,3,4,5}};
-    // borderNeighbors[3] = std::vector<unsigned>{{14,13,12}};
-    // borderNeighbors[4] = std::vector<unsigned>{{}};
-    // borderNeighbors[5] = std::vector<unsigned>{{4,5,6}};
-    //borderNeighbors[6] = std::vector<unsigned>{{13,12,11,10,9}};
+    borderNeighbors[0] = std::vector<unsigned>{{15,14,13,0,2}};
+    borderNeighbors[1] = std::vector<unsigned>{{0,1,2}};
+    borderNeighbors[2] = std::vector<unsigned>{{1,2,3,4,5}};
+    borderNeighbors[3] = std::vector<unsigned>{{14,13,12}};
+    borderNeighbors[4] = std::vector<unsigned>{{}};
+    borderNeighbors[5] = std::vector<unsigned>{{4,5,6}};
+    borderNeighbors[6] = std::vector<unsigned>{{13,12,11,10,9}};
     borderNeighbors[7] = std::vector<unsigned>{{8,9,10}};
-    //borderNeighbors[8] = std::vector<unsigned>{{5,6,7,8,9}};
+    borderNeighbors[8] = std::vector<unsigned>{{5,6,7,8,9}};
 
     coreNeighbors[0] = std::vector<unsigned>{{1,3,4}};
     coreNeighbors[1] = std::vector<unsigned>{{0,2,3,4,5}};
@@ -152,11 +152,11 @@ void updateState(T &cell){
  
     for(unsigned i = 0; i < cell.core.size(); i++){
     	unsigned nNeighbors = 0;
-    	// for(auto c: coreNeighbors[i]){
-    	//     if(cell.core[c] > 0){
-    	// 	nNeighbors++;
-    	//     }
-    	// }
+    	for(auto c: coreNeighbors[i]){
+    	    if(cell.core[c] > 0){
+    		nNeighbors++;
+    	    }
+    	}
 
     	for(auto b: borderNeighbors[i]){
     	    if(cell.border[b] > 0){
@@ -164,29 +164,29 @@ void updateState(T &cell){
     	    }
     	}
 
-	if(nNeighbors > 0)
-	    cell.core[i] = 1;
+	// if(nNeighbors > 0)
+	//     cell.core[i] = 1;
 	
-	// switch(nNeighbors){
+	switch(nNeighbors){
 
-    	// case 0:
-    	// case 1:
-    	//     cell.core[i] = cell.core[i];
-    	//     break;
+    	case 0:
+    	case 1:
+    	    cell.core[i] = 0;
+    	    break;
 
-    	// case 2:
-    	//     cell.core[i] = cell.core[i];
-    	//     break;
+    	case 2:
+    	    cell.core[i] = cell.core[i];
+    	    break;
 	    
-    	// case 3: 
-    	//     cell.core[i] = 1;
-    	//     break;
+    	case 3: 
+    	    cell.core[i] = 1;
+    	    break;
 
-    	// default: 
-    	//     cell.core[i] = cell.core[i];
-    	//     break;
+    	default: 
+    	    cell.core[i] = 0;
+    	    break;
 
-    	// };
+    	};
 
     }
 
@@ -232,7 +232,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
     MyCave cave(graybat::pattern::GridDiagonal(height, width));
     
     // Distribute vertices
-    cave.distribute(graybat::mapping::Roundrobin());
+    cave.distribute(graybat::mapping::Consecutive());
 
     // Think of some good way to
     // create connections between memories
@@ -254,28 +254,21 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    //std::cout << "-->" << xDest << " " << yDest << std::endl;
 
 	    // Src indices from core
-	    if(x == xDest and y < yDest) // up
+	    if(x == xDest and y > yDest) // Dest up
 		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
-		//destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
-	    
-	    if(x < xDest and y < yDest) // up right
+	    if(x < xDest and y > yDest) // Dest up right
 		destEdge.srcIndices = std::vector<Cell>{{2}};
-	    if(x < xDest and y == yDest) // right
+	    if(x < xDest and y == yDest) // Dest right
 		destEdge.srcIndices = std::vector<Cell>{{2,5,8}};
-	    if(x < xDest and y > yDest) // down right
+	    if(x < xDest and y < yDest) // Dest down right
 		destEdge.srcIndices = std::vector<Cell>{{8}};
-
-	    
-	    if(x == xDest and y > yDest) // down
-		destEdge.srcIndices = std::vector<Cell>{{0,1,2}};
-		//destEdge.srcIndices = std::vector<Cell>{{6,7,8}};
-
-	    
-	    if(x > xDest and y > yDest) // down left
+	    if(x == xDest and y < yDest) // Dest down
+		destEdge.srcIndices = std::vector<Cell>{{6,7,8}};
+	    if(x > xDest and y < yDest) // Dest down left
 		destEdge.srcIndices = std::vector<Cell>{{6}};
-	    if(x > xDest and y == yDest) // left
+	    if(x > xDest and y == yDest) // Dest left
 		destEdge.srcIndices = std::vector<Cell>{{0,3,6}};
-	    if(x > xDest and y < yDest) // up left
+	    if(x > xDest and y > yDest) // Dest up left
 		destEdge.srcIndices = std::vector<Cell>{{0}};
 
 
@@ -289,34 +282,22 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    unsigned ySrc = srcVertex.coordinates().second;
 
 	    // Dest indices from border
-	    if(x == xSrc and y < ySrc) // up
-		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
-	    //srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
-	    if(x < xSrc and y < ySrc) // up right
-		srcEdge.destIndices = std::vector<Cell>{{11}};
-	    //srcEdge.destIndices = std::vector<Cell>{{3}};
-	    if(x < xSrc and y == ySrc) // right
-		srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
-		//srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
-	    if(x < xSrc and y > ySrc) // down right
-		srcEdge.destIndices = std::vector<Cell>{{15}};
-		//srcEdge.destIndices = std::vector<Cell>{{7}};
-	    
-
-	    if(x == xSrc and y > ySrc) // down
+	    if(x == xSrc and y > ySrc) // Src up
 		srcEdge.destIndices = std::vector<Cell>{{0,1,2}};
-	    //srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
-
-
-	    if(x > xSrc and y > ySrc) // down left
+	    if(x < xSrc and y > ySrc) // Src up right
 		srcEdge.destIndices = std::vector<Cell>{{3}};
-		//srcEdge.destIndices = std::vector<Cell>{{11}};
-	    if(x > xSrc and y == ySrc) // left
+	    if(x < xSrc and y == ySrc) // Src right
 		srcEdge.destIndices = std::vector<Cell>{{4,5,6}};
-		//srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
-	    if(x > xSrc and y < ySrc) // up left
+	    if(x < xSrc and y < ySrc) // Src down right
 		srcEdge.destIndices = std::vector<Cell>{{7}};
-		//srcEdge.destIndices = std::vector<Cell>{{15}};
+	    if(x == xSrc and y < ySrc) // Src down
+		srcEdge.destIndices = std::vector<Cell>{{10,9,8}};
+	    if(x > xSrc and y < ySrc) // Src down left
+		srcEdge.destIndices = std::vector<Cell>{{11}};
+	    if(x > xSrc and y == ySrc) // Src left
+		srcEdge.destIndices = std::vector<Cell>{{14,13,12}};
+	    if(x > xSrc and y > ySrc) // Src up left
+		srcEdge.destIndices = std::vector<Cell>{{15}};
 
 	}
 	
@@ -384,7 +365,7 @@ int gol(const unsigned nCells, const unsigned nTimeSteps ) {
 	    cave.gather(root, v, v.core, golDomain, true);
       	}
 
-	usleep(1000000);
+	//usleep(1000000);
 	
       }
     
