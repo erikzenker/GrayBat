@@ -7,8 +7,8 @@
 #include <exception>    /* std::out_of_range */
 #include <sstream>      /* std::stringstream */
 #include <algorithm>    /* std::transform */
- #include <mpi.h>        /* MPI_* */
-#include <dout.hpp>     /* dout */
+#include <mpi.h>        /* MPI_* */
+
 
 // Boost mpi stuff
 #include <boost/mpi/environment.hpp>
@@ -587,9 +587,7 @@ namespace graybat {
 	    
 	    
 	    void error(VAddr vAddr, std::string msg){
-	    	using namespace dout;
-	    	Dout dout = Dout::getInstance();
-	    	dout(Flags::ERROR) << "[" << vAddr << "] " << msg;
+		std::cout << "[" << vAddr << "] " << msg;
 
 	    }
 
