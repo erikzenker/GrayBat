@@ -31,7 +31,7 @@ namespace graybat {
     
     namespace communicationPolicy {
     
-        namespace zmq {
+        namespace socket {
 
             /**
              * @brief A context represents a set of peers which are
@@ -118,7 +118,7 @@ namespace graybat {
             };
 
 
-        } // zmq
+        } // socket
         
     } // namespace communicationPolicy
 	

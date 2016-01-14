@@ -78,18 +78,18 @@ endif()
 # Targets
 ###############################################################################
 
-# Test cases
+# Test cases: make check
 file(GLOB TESTS test/*.cpp)
 add_executable(check EXCLUDE_FROM_ALL ${TESTS})
 target_link_libraries(check ${LIBS})
 
-# Fast testing
+# Fast testing: make checkFast
 file(GLOB TESTSFAST test/UT.cpp test/CommunicationPolicyUT.cpp)
 add_executable(checkFast EXCLUDE_FROM_ALL ${TESTSFAST})
 target_link_libraries(checkFast ${LIBS})
 
 
-# Examples
+# Examples: make example
 add_custom_target(example)
 file(GLOB EXAMPLES  example/*.cpp)
 foreach(EXAMPLE ${EXAMPLES})
@@ -104,7 +104,11 @@ endforeach(EXAMPLE)
 add_executable(gbZMQSignaling EXCLUDE_FROM_ALL utils/zmq_signaling_server.cpp )
 target_link_libraries(gbZMQSignaling ${LIBS})
 
-# CTest
+# Asio signaling server: make asio_signaling
+add_executable(asio_signaling EXCLUDE_FROM_ALL utils/asio_signaling_server.cpp )
+target_link_libraries(asio_signaling ${LIBS})
+
+# CTest: make test
 enable_testing()
 add_test(graybat_check_build "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target check)
 add_test(graybat_example_build "${CMAKE_COMMAND}" --build ${CMAKE_BINARY_DIR} --target example)
@@ -115,7 +119,7 @@ set_tests_properties(graybat_test_run PROPERTIES DEPENDS graybat_check_build)
 set_tests_properties(graybat_gol_run PROPERTIES DEPENDS graybat_example_build)
 set_tests_properties(graybat_pr_run PROPERTIES DEPENDS graybat_example_build)
 
-# Install
+# Install: make install
 file(GLOB CMAKE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cmake")
 
 install(
@@ -132,7 +136,7 @@ install( TARGETS gbZMQSignaling
           RUNTIME DESTINATION "bin"
         )
 
-# Doxygen
+# Doxygen: make doc
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.conf ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)

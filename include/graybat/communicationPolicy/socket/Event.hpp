@@ -29,17 +29,16 @@
 namespace graybat {
 
     namespace communicationPolicy {
-
-        namespace zmq {
-
-            /**
-             * @brief An event is returned by non-blocking
-             *        communication operations and can be
-             *        asked whether an operation has finished
-             *        or it can be waited for this operation to
-             *        be finished.
-             *
-             */
+        namespace socket {
+                        
+	    /**
+	     * @brief An event is returned by non-blocking 
+	     *        communication operations and can be 
+	     *        asked whether an operation has finished
+	     *        or it can be waited for this operation to
+	     *        be finished.
+	     *
+	     */
             template <typename T_CP>
             class Event {
             public:
@@ -124,8 +123,8 @@ namespace graybat {
 
             };
 
-        } // zmq
-
+        } // socket
+        
     } // namespace communicationPolicy
 
 } // namespace graybat

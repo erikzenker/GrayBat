@@ -37,12 +37,12 @@
 #include <zmq.hpp>    /* zmq::socket_t, zmq::context_t */
 
 // GrayBat
-#include <graybat/communicationPolicy/socket/Base.hpp> /* Base */
+#include <graybat/communicationPolicy/socket/Base.hpp>    /* Base */
+#include <graybat/communicationPolicy/socket/Context.hpp> /* Context */
+#include <graybat/communicationPolicy/socket/Event.hpp>   /* Event */
 #include <graybat/communicationPolicy/Traits.hpp>
-#include <graybat/communicationPolicy/zmq/Message.hpp> /* Message */
-#include <graybat/communicationPolicy/zmq/Context.hpp> /* Context */
-#include <graybat/communicationPolicy/zmq/Event.hpp>   /* Event */
-#include <graybat/communicationPolicy/zmq/Config.hpp>  /* Config */
+#include <graybat/communicationPolicy/zmq/Message.hpp>    /* Message */
+#include <graybat/communicationPolicy/zmq/Config.hpp>     /* Config */
 
 
 namespace graybat {
@@ -62,7 +62,7 @@ namespace graybat {
 
             template<>
             struct ContextType<ZMQ> {
-                using type = graybat::communicationPolicy::zmq::Context<ZMQ>;
+                using type = graybat::communicationPolicy::socket::Context<ZMQ>;
             };
 
             template<>
@@ -72,7 +72,7 @@ namespace graybat {
 
             template<>
             struct EventType<ZMQ> {
-                using type = graybat::communicationPolicy::zmq::Event<ZMQ>;
+                using type = graybat::communicationPolicy::socket::Event<ZMQ>;
             };
 
             template<>
@@ -208,8 +208,8 @@ namespace graybat {
 	    }
 
             template <typename T_Socket>
-	    void sendToSocket(T_Socket& socket, ::zmq::message_t & data) {
-                socket.send(data);
+	    void sendToSocket(T_Socket& socket, Message & message) {
+                socket.send(message.getMessage());
             }
 
 	    Uri bindToNextFreePort(Socket &socket, const std::string peerUri){

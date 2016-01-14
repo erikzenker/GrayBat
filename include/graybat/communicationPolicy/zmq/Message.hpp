@@ -115,7 +115,7 @@ namespace graybat {
                     
                 }
                 
-                ::zmq::message_t& getMessage(){
+                ::zmq::message_t & getMessage() {
                     return message;
                 }
                 
