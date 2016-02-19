@@ -99,11 +99,12 @@ namespace graybat {
             using SocketBase = graybat::communicationPolicy::socket::Base<Asio>;
             
 	    // Asio Sockets
+            boost::asio::io_service io_service;
+            
             Socket signalingSocket;     
             Socket recvSocket;
             std::vector<Socket> sendSockets;
 
-            boost::asio::io_service io_service; 
             
             // Uris
 	    const Uri peerUri;
@@ -122,7 +123,7 @@ namespace graybat {
 
 	    // Destructor
 	    ~Asio(){
-                SocketBase::deinit();
+                //SocketBase::deinit();
 	    }
 
 	    Asio(Asio &&other) = delete;
@@ -145,20 +146,19 @@ namespace graybat {
             
             template <typename T_Socket>
             void connectToSocket(T_Socket& socket, std::string const uri) {
-		std::string baseUri = uri.substr(0, peerUri.rfind(":"));
-                std::string port    = uri.substr(peerUri.rfind(":") + 1);
+		std::string baseUri = uri.substr(0, uri.rfind(":")).substr(uri.rfind("//") + 2);
+                std::string port    = uri.substr(uri.rfind(":") + 1);
                 
                 boost::asio::ip::tcp::resolver resolver(io_service);
-
                 boost::asio::ip::tcp::resolver::query url(baseUri, port);
                 boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(url);
-                
+
+                std::cout << "connect to: " << baseUri << ":" << port << std::endl;
                 boost::asio::connect(socket, endpoint_iterator);
                     
             }
 
 	    Uri bindToNextFreePort(Socket &socket, const std::string peerUri){
-		std::string peerBaseUri = peerUri.substr(0, peerUri.rfind(":"));
 		unsigned peerBasePort   = std::stoi(peerUri.substr(peerUri.rfind(":") + 1));		
 		bool connected          = false;
 
@@ -167,7 +167,7 @@ namespace graybat {
                     try {
                         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), peerBasePort);
                         boost::asio::ip::tcp::acceptor acceptor(io_service, endpoint); 
-                        acceptor.accept(socket); 
+                        //acceptor.accept(socket); 
                         connected = true;
                     }
                     catch(...){

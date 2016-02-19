@@ -8,11 +8,13 @@
 #include <string>   /* std::string */
 #include <sstream>  /* std::stringstream */
 
+// Boost.Asio
+#include <boost/asio.hpp>
+
 // Boost
 #include <boost/program_options.hpp>
 
-// Boost.Asio
-#include <boost/asio.hpp>
+#define CHUNK_SIZE 8096
 
 // Type defs
 typedef unsigned Tag;                                            
@@ -61,6 +63,22 @@ void sendToSocket(T_Socket& socket, std::stringstream & ss) {
     } 
 
 }
+
+void recvHandler(const boost::system::error_code& error,std::size_t bytes_transferred){
+
+}
+
+void acceptHandler(const boost::system::error_code& error){
+
+    std::cout << "Accept" << std::endl;
+    
+    if(!error){
+
+    }
+
+    
+}
+
 
 
 int main(const int argc, char **argv){
@@ -117,112 +135,131 @@ int main(const int argc, char **argv){
      * Start signaling
      **************************************************************************/
     
-    std::cout << "Start zmq signaling server" << std::endl;
+    std::cout << "Start asio signaling server" << std::endl;
 
     std::map<ContextID, std::map<VAddr, Uri> > phoneBook;
     std::map<ContextID, VAddr> maxVAddr;
 
     std::cout << "Listening on: " << masterUri << std::endl;
     
-    zmq::context_t context(1);
+    boost::asio::io_service io_service;
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), vm["port"].as<unsigned>());    
+    boost::asio::ip::tcp::acceptor acceptor(io_service, endpoint); 
+
+    boost::asio::ip::tcp::socket socket(io_service);
+    acceptor.async_accept(socket, acceptHandler);
+    //acceptor.accept(socket);
+
+    //std::cout << "accepted connection" << std::endl;
+
+    io_service.run();
     
-    zmq::message_t request;
-    zmq::message_t reply;
-    zmq::socket_t socket (context, ZMQ_REP);
-    const int hwm = 10000;
-    socket.setsockopt( ZMQ_RCVHWM, &hwm, sizeof(hwm));
-    socket.setsockopt( ZMQ_SNDHWM, &hwm, sizeof(hwm));
-
-    
-    socket.bind(masterUri.c_str());
-
-    ContextID maxContextID = 0;
-    ContextID maxInitialContextID = maxContextID;    
-
     while(true){
-        std::stringstream ss;
-        ss << s_recv(socket);
-
-        Uri srcUri;
-        MsgType type;
-	ContextID contextID;
-	unsigned size;
-        ss >> type;
-
-        switch(type){
-
-	case CONTEXT_INIT:
-	    {
-
-		ss >> size;
-		if(maxVAddr[maxInitialContextID]  == size){
-		    maxInitialContextID = ++maxContextID;
-		    maxVAddr[maxInitialContextID] = 0;
-		}
-		s_send(socket, (std::to_string(maxInitialContextID) + " ").c_str());
-		std::cout << "CONTEXT INIT [size:" << size << "]: " << maxInitialContextID << std::endl;		
-		break;
-	    }
-
-	case CONTEXT_REQUEST:
-	    {
-		ss >> size;
-		maxVAddr[++maxContextID] = 0;
-		s_send(socket, (std::to_string(maxContextID) + " ").c_str());
-		std::cout << "CONTEXT REQUEST [size:" << size << "]: " << maxContextID << std::endl;				
-		break;
-
-	    }
-	    
-        case VADDR_REQUEST:
-            {
-                // Reply with correct information
-		ss >> contextID;
-                ss >> srcUri;
-
-                phoneBook[contextID][maxVAddr[contextID]] = srcUri;
-                s_send(socket, (std::to_string(maxVAddr[contextID]) + " ").c_str());
-		std::cout << "VADDR REQUEST [contextID:" << contextID << "][srcUri:" << srcUri << "]: " << maxVAddr[contextID] << std::endl;
-		maxVAddr[contextID]++;		
-                break;
-            }
-                        
-        case VADDR_LOOKUP:
-            {
-                VAddr remoteVAddr;
-		ss >> contextID;
-                ss >> remoteVAddr;		
-		
-                std::stringstream sss;
-
-                if(phoneBook[contextID].count(remoteVAddr) == 0){
-                    sss << RETRY;
-                    s_send(socket, sss.str().c_str());
-		    std::cout << "VADDR LOOKUP [contextID:" << contextID << "][remoteVAddr:" << remoteVAddr << "]: " << " RETRY"<< std::endl;		    		    
-                }
-                else {
-                    sss << ACK << " " << phoneBook[contextID][remoteVAddr] << " ";
-                    s_send(socket, sss.str().c_str());
-		    std::cout << "VADDR LOOKUP [contextID:" << contextID << "][remoteVAddr:" << remoteVAddr << "]: " << phoneBook[contextID][remoteVAddr] << std::endl;
-                }
-
-                break;
-            }
-
-        case DESTRUCT:
-            s_send(socket, " ");
-	    std::cout << "DESTRUCT" << std::endl;
-            break;
-                        
-        default:
-            // Reply empty message
-            s_send(socket, " ");
-	    std::cout << "UNKNOWN MESSAGE TYPE" << std::endl;
-	    exit(0);
-            break;
-
-        };
-                    
     }
+
+    
+    // ContextID maxContextID = 0;
+    // ContextID maxInitialContextID = maxContextID;    
+
+    // while(true){
+    //     std::stringstream recvStream;
+    //     std::stringstream sendStream;        
+
+
+
+
+        
+
+
+    //     recvFromSocket(socket, recvStream);
+
+    //     Uri srcUri;
+    //     MsgType type;
+    //     ContextID contextID;
+    //     unsigned size;
+    //     recvStream >> type;
+
+    //     switch(type){
+
+    //     case CONTEXT_INIT:
+    //         {
+
+    //     	recvStream >> size;
+    //     	if(maxVAddr[maxInitialContextID]  == size){
+    //     	    maxInitialContextID = ++maxContextID;
+    //     	    maxVAddr[maxInitialContextID] = 0;
+    //     	}
+
+    //             sendStream << std::to_string(maxInitialContextID) << " ";
+    //     	sendToSocket(socket, sendStream);
+    //     	std::cout << "CONTEXT INIT [size:" << size << "]: " << maxInitialContextID << std::endl;		
+    //     	break;
+    //         }
+
+    //     case CONTEXT_REQUEST:
+    //         {
+    //     	recvStream >> size;
+    //     	maxVAddr[++maxContextID] = 0;
+
+    //             sendStream << std::to_string(maxContextID) << " ";
+    //     	sendToSocket(socket, sendStream);
+    //     	std::cout << "CONTEXT REQUEST [size:" << size << "]: " << maxContextID << std::endl;				
+    //     	break;
+
+    //         }
+	    
+    //     case VADDR_REQUEST:
+    //         {
+    //             // Reply with correct information
+    //     	recvStream >> contextID;
+    //             recvStream >> srcUri;
+
+    //             phoneBook[contextID][maxVAddr[contextID]] = srcUri;
+
+    //             sendStream << std::to_string(maxVAddr[contextID]) << " ";
+    //             sendToSocket(socket, sendStream);
+    //     	std::cout << "VADDR REQUEST [contextID:" << contextID << "][srcUri:" << srcUri << "]: " << maxVAddr[contextID] << std::endl;
+    //     	maxVAddr[contextID]++;		
+    //             break;
+    //         }
+                        
+    //     case VADDR_LOOKUP:
+    //         {
+    //             VAddr remoteVAddr;
+    //     	recvStream >> contextID;
+    //             recvStream >> remoteVAddr;		
+		
+
+    //             if(phoneBook[contextID].count(remoteVAddr) == 0){
+    //                 sendStream << RETRY << " ";
+    //                 sendToSocket(socket, sendStream);
+    //     	    std::cout << "VADDR LOOKUP [contextID:" << contextID << "][remoteVAddr:" << remoteVAddr << "]: " << " RETRY"<< std::endl;		    		    
+    //             }
+    //             else {
+    //                 sendStream << ACK << " " << phoneBook[contextID][remoteVAddr] << " ";
+    //                 sendToSocket(socket, sendStream);
+    //     	    std::cout << "VADDR LOOKUP [contextID:" << contextID << "][remoteVAddr:" << remoteVAddr << "]: " << phoneBook[contextID][remoteVAddr] << std::endl;
+    //             }
+
+    //             break;
+    //         }
+
+    //     case DESTRUCT:
+    //         sendStream << " ";
+    //         sendToSocket(socket, sendStream);
+    //         std::cout << "DESTRUCT" << std::endl;
+    //         break;
+                        
+    //     default:
+    //         // Reply empty message
+    //         sendStream << " ";
+    //         sendToSocket(socket, sendStream);
+    //         std::cout << "UNKNOWN MESSAGE TYPE" << std::endl;
+    //         exit(0);
+    //         break;
+
+    //     };
+                    
+    // }
 
 }
