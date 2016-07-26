@@ -27,10 +27,10 @@
 #define CHUNK_SIZE 8096
 
 namespace graybat {
-    
+
     namespace communicationPolicy {
 
-	/************************************************************************//**
+        /************************************************************************//**
 	 * @class Asio
 	 *
 	 * @brief Implementation of the Cage communicationPolicy interface
@@ -56,7 +56,7 @@ namespace graybat {
                 using type = graybat::communicationPolicy::asio::Config;
             };
 
-            
+
         }
 
         namespace socket {
@@ -77,14 +77,14 @@ namespace graybat {
                 struct MessageType<Asio> {
                     using type = graybat::communicationPolicy::asio::Message<Asio>;
                 };
-                
+
             }
-            
+
         }
 
-	struct Asio : public graybat::communicationPolicy::socket::Base<Asio> {
-            
-	    // Type defs
+        struct Asio : public graybat::communicationPolicy::socket::Base<Asio> {
+
+            // Type defs
             using Tag        = graybat::communicationPolicy::Tag<Asio>;
             using ContextID  = graybat::communicationPolicy::ContextID<Asio>;
             using MsgID      = graybat::communicationPolicy::MsgID<Asio>;
@@ -94,43 +94,44 @@ namespace graybat {
             using Config     = graybat::communicationPolicy::Config<Asio>;
             using MsgType    = graybat::communicationPolicy::MsgType<Asio>;
             using Uri        = graybat::communicationPolicy::socket::Uri<Asio>;
-            using Socket     = graybat::communicationPolicy::socket::Socket<Asio>;            
+            using Socket     = graybat::communicationPolicy::socket::Socket<Asio>;
             using Message    = graybat::communicationPolicy::socket::Message<Asio>;
             using SocketBase = graybat::communicationPolicy::socket::Base<Asio>;
-            
-	    // Asio Sockets
+
+            // Asio Sockets
             boost::asio::io_service io_service;
-            
-            Socket signalingSocket;     
+
+            Socket signalingSocket;
             Socket recvSocket;
             std::vector<Socket> sendSockets;
 
-            
+
             // Uris
-	    const Uri peerUri;
+            const Uri peerUri;
 
             // Construct
-	    Asio(Config const config) :
+            Asio(Config const config) :
                 recvSocket(io_service),
-		signalingSocket(io_service),
+                signalingSocket(io_service),
                 peerUri(bindToNextFreePort(recvSocket, config.peerUri)),
                 SocketBase(config) {
 
                 //std::cout << "PeerUri: " << peerUri << std::endl;
                 SocketBase::init();
-                
+
             }
 
-	    // Destructor
-	    ~Asio(){
+            // Destructor
+            ~Asio() {
                 //SocketBase::deinit();
-	    }
+            }
 
-	    Asio(Asio &&other) = delete;
-	    Asio(Asio &other)  = delete;
+            Asio(Asio &&other) = delete;
+
+            Asio(Asio &other) = delete;
 
 
-	    /***********************************************************************//**
+            /***********************************************************************//**
              *
 	     * @name Socket base utilities
 	     *
@@ -138,113 +139,117 @@ namespace graybat {
 	     *
 	     ***************************************************************************/
 
-            void createSocketsToPeers(){
-		for(unsigned vAddr = 0; vAddr < initialContext.size(); vAddr++){
+            void createSocketsToPeers() {
+                for (unsigned vAddr = 0; vAddr < initialContext.size(); vAddr++) {
                     sendSockets.emplace_back(Socket(io_service));
                 }
             }
-            
-            template <typename T_Socket>
-            void connectToSocket(T_Socket& socket, std::string const uri) {
-		std::string baseUri = uri.substr(0, uri.rfind(":")).substr(uri.rfind("//") + 2);
-                std::string port    = uri.substr(uri.rfind(":") + 1);
-                
+
+            template<typename T_Socket>
+            void connectToSocket(T_Socket &socket, std::string const uri) {
+                std::string baseUri = uri.substr(0, uri.rfind(":")).substr(uri.rfind("//") + 2);
+                std::string port = uri.substr(uri.rfind(":") + 1);
+
                 boost::asio::ip::tcp::resolver resolver(io_service);
                 boost::asio::ip::tcp::resolver::query url(baseUri, port);
                 boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(url);
 
                 std::cout << "connect to: " << baseUri << ":" << port << std::endl;
                 boost::asio::connect(socket, endpoint_iterator);
-                    
+
             }
 
-	    Uri bindToNextFreePort(Socket &socket, const std::string peerUri){
-		unsigned peerBasePort   = std::stoi(peerUri.substr(peerUri.rfind(":") + 1));		
-		bool connected          = false;
+            Uri bindToNextFreePort(Socket &socket, const std::string peerUri) {
+                unsigned peerBasePort = std::stoi(peerUri.substr(peerUri.rfind(":") + 1));
+                bool connected = false;
 
-		std::string uri;
-		while(!connected){
+                std::string uri;
+                while (!connected) {
                     try {
                         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), peerBasePort);
-                        boost::asio::ip::tcp::acceptor acceptor(io_service, endpoint); 
+                        boost::asio::ip::tcp::acceptor acceptor(io_service, endpoint);
                         //acceptor.accept(socket); 
                         connected = true;
                     }
-                    catch(...){
-			//std::cout << e.what() << ". PeerUri \"" << uri << "\". Try to increment port and rebind." << std::endl;
+                    catch (...) {
+                        //std::cout << e.what() << ". PeerUri \"" << uri << "\". Try to increment port and rebind." << std::endl;
                         peerBasePort++;
                     }
-		    
+
                 }
 
-		return uri;
-		
+                return uri;
+
             }
-            
-            template <typename T_Socket>            
-	    void recvFromSocket(T_Socket& socket, std::stringstream& ss) {
+
+            template<typename T_Socket>
+            void recvFromSocket(T_Socket &socket, std::stringstream &ss) {
                 const size_t size = ss.str().size();
-                std::array<char, CHUNK_SIZE> chunk; 
+                std::array<char, CHUNK_SIZE> chunk;
                 size_t transferred = 0;
 
-                while (transferred != size) { 
-                    size_t remaining = size - transferred; 
+                while (transferred != size) {
+                    size_t remaining = size - transferred;
                     size_t read_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
-                    boost::asio::read(socket, boost::asio::buffer(chunk, read_size)); 
-                    ss.write(chunk.data(), read_size); 
-                    transferred += read_size; 
+                    boost::asio::read(socket, boost::asio::buffer(chunk, read_size));
+                    ss.write(chunk.data(), read_size);
+                    transferred += read_size;
                 }
-                
-	    }
 
-            template <typename T_Socket>            
-	    void recvFromSocket(T_Socket& socket, Message & message) {
-                const size_t size = message.getSize();                
+            }
+
+            template<typename T_Socket>
+            void recvFromSocket(T_Socket &socket, Message &message) {
+                const size_t size = message.getSize();
                 size_t transferred = 0;
-                
-                while (transferred != size) { 
-                    size_t remaining = size - transferred; 
-                    size_t read_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
-                    boost::asio::read(socket, boost::asio::buffer(static_cast<void*>(&message.getMessage()[transferred]), read_size)); 
-                    transferred += read_size; 
-                }              
-	    }
 
-            template <typename T_Socket>
-	    void sendToSocket(T_Socket& socket, std::stringstream & ss) {
+                while (transferred != size) {
+                    size_t remaining = size - transferred;
+                    size_t read_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
+                    boost::asio::read(socket,
+                                      boost::asio::buffer(static_cast<void *>(&message.getMessage()[transferred]),
+                                                          read_size));
+                    transferred += read_size;
+                }
+            }
+
+            template<typename T_Socket>
+            void sendToSocket(T_Socket &socket, std::stringstream &ss) {
                 const size_t size = ss.str().size();
                 size_t transferred = 0;
                 std::array<char, CHUNK_SIZE> chunk;
-                
-                while (transferred != size){ 
-                    size_t remaining = size - transferred; 
+
+                while (transferred != size) {
+                    size_t remaining = size - transferred;
                     size_t write_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
-                    ss.read(chunk.data(), CHUNK_SIZE); 
-                    boost::asio::write(socket, boost::asio::buffer(chunk, write_size)); 
-                    transferred += write_size; 
-                } 
+                    ss.read(chunk.data(), CHUNK_SIZE);
+                    boost::asio::write(socket, boost::asio::buffer(chunk, write_size));
+                    transferred += write_size;
+                }
 
-	    }
+            }
 
-            template <typename T_Socket>
-	    void sendToSocket(T_Socket& socket, Message & message) {
-                const size_t size = message.getSize();                
+            template<typename T_Socket>
+            void sendToSocket(T_Socket &socket, Message &message) {
+                const size_t size = message.getSize();
                 size_t transferred = 0;
-                
-                while (transferred != size){ 
-                    size_t remaining = size - transferred; 
-                    size_t write_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
-                    boost::asio::write(socket, boost::asio::buffer(static_cast<void*>(&message.getMessage()[transferred]), write_size)); 
-                    transferred += write_size; 
-                } 
 
-                
-                
+                while (transferred != size) {
+                    size_t remaining = size - transferred;
+                    size_t write_size = (remaining > CHUNK_SIZE) ? CHUNK_SIZE : remaining;
+                    boost::asio::write(socket,
+                                       boost::asio::buffer(static_cast<void *>(&message.getMessage()[transferred]),
+                                                           write_size));
+                    transferred += write_size;
+                }
+
+
+
                 //socket.send(data);
             }
-                
-	}; // class Asio
+
+        }; // class Asio
 
     } // namespace communicationPolicy
-	
+
 } // namespace graybat
