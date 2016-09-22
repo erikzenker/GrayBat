@@ -21,23 +21,14 @@
 #pragma once
 
 #include <graybat/communicationPolicy/Traits.hpp>
+#include <graybat/communicationPolicy/Interface.hpp>
 
 namespace graybat {
     
     namespace communicationPolicy {
 
-        /**
-         * @brief
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         */
         template <typename T_CommunicationPolicy>
-        struct Base {
+        struct Base : public graybat::communicationPolicy::Interface<T_CommunicationPolicy> {
 
             using CommunicationPolicy = T_CommunicationPolicy;
             using VAddr               = typename graybat::communicationPolicy::VAddr<CommunicationPolicy>;
